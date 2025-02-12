@@ -1,10 +1,8 @@
-/* eslint-disable no-useless-escape */
-/* eslint-disable no-await-in-loop */
 import { window, ExtensionContext, commands, QuickPickItem, QuickPickOptions, workspace, Selection } from 'vscode';
 import translatePlatforms, { EengineType } from './inc/translate';
 import { changeCaseMap, isChinese } from './utils';
 import { noCase, snakeCase } from 'change-case';
-import AsyncQuickPick from './utils/asyncPIck';
+import AsyncQuickPick from './utils/asyncPick';
 
 interface IWordResult {
   engine: EengineType;
@@ -103,16 +101,20 @@ const replaceTextInEditor = (editor: any, selection: any, newText: string) => {
 const showSelectAndReplace = async (word: string, selection: Selection, translated: string | Promise<string>) => {
   const editor = window.activeTextEditor;
   /* 如果是异步情况 */
-  let userSelected;
   if (translated instanceof Promise) {
     selectAndReplace(word, [{ label: '正在翻译中', description: '翻译' }])
-    const asyncTranslated = await translated;
-    userSelected = await selectAndReplace(word, [{ label: asyncTranslated, description: '翻译' }], true);
+      .then((userSelected) => {
+        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
+      });
+    translated.then(asyncTranslated => selectAndReplace(word, [{ label: asyncTranslated, description: '翻译' }], true))
+      .then((userSelected) => {
+        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
+      });
   } else {
     selectAndReplace(word, [{ label: translated, description: '翻译' }])
-  }
-  if (userSelected) {
-    replaceTextInEditor(editor, selection, userSelected,);
+      .then((userSelected) => {
+        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
+      });
   }
 }
 /**
