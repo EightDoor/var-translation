@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.56](https://github.com/SvenZhao/var-translation/compare/v0.13.55...v0.13.56) (2025-02-12)
+
+
+### Features
+
+* 异步翻译语言 修复EN缓存bug 提高性能 ([058fb5e](https://github.com/SvenZhao/var-translation/commit/058fb5e6646b6fac7eb28ba1431eb88569f011a9))
+* doc ([6ff8e34](https://github.com/SvenZhao/var-translation/commit/6ff8e34960006160fa5e2ff5cabb5a819d4c395b))
+
 ### [0.13.55](https://github.com/SvenZhao/var-translation/compare/v0.13.54...v0.13.55) (2024-11-20)
 
 
