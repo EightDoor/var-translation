@@ -27,11 +27,8 @@ const checkUpdate = async (context: ExtensionContext) => {
 
     const updateContent = `
    **${packageJSON.displayName} 更新**:
-    - 加入右键子命令菜单
-    - 翻译异常时，展示更详细的错误消息，帮助调试
-    - ChatGPT 提示语优化，更适合开发场景
-    - ChatGPT 支持自定义模型
-    - 英汉互译支持
+    - 异步英汉优化互译响应 提高直接转换的使用体验
+    - 修复英文单词缓存
     `;
     window.showInformationMessage(updateContent)
   }
