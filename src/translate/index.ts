@@ -19,9 +19,16 @@ const LANGUAGE = {
 class VarTranslator {
   private text = '';
   private cache = new Map<string, CacheItem>();
-
-  private get config() {
-    return workspace.getConfiguration('varTranslation');
+  private config = workspace.getConfiguration('varTranslation')
+  constructor() {
+    // 注册配置更改监听器
+    workspace.onDidChangeConfiguration((event) => {
+      // 检查特定配置项是否被修改
+      if (event.affectsConfiguration('varTranslation')) {
+        this.config = workspace.getConfiguration('varTranslation')
+        this.showStatus(`用户更新配置`);
+      }
+    });
   }
   get isChinese() {
     return isChinese(this.text);
@@ -64,7 +71,7 @@ class VarTranslator {
         ? capitalCase(this.text)
         : this.text;
 
-      this.showStatus(`翻译: ${processedText} 到 ${this.targetLang}`);
+      this.showStatus(`${this.engine}翻译: ${processedText} 到 ${this.targetLang}`);
       const { text: result } = await engine(processedText, this.targetLang);
 
       if (result) {
