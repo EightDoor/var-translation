@@ -1,4 +1,4 @@
-import { noCase, snakeCase } from "change-case";
+import { capitalCase, snakeCase } from "change-case";
 import { window, workspace } from "vscode";
 import { isChinese } from "../utils";
 import translatePlatforms, { EengineType } from "./engine";
@@ -23,7 +23,7 @@ class VarTranslator {
   private get config() {
     return workspace.getConfiguration('varTranslation');
   }
-  private get isChinese() {
+  get isChinese() {
     return isChinese(this.text);
   }
 
@@ -42,13 +42,15 @@ class VarTranslator {
   }
 
   private showStatus(message: string) {
-    window.setStatusBarMessage(`${packageJSON.displayName}: ${message}`, 2000);
+    const msg = `${packageJSON.displayName}: ${message}`
+    console.log(msg)
+    window.setStatusBarMessage(msg, 2000);
   }
-
-  async translate(text: string): Promise<string> {
+  setText(text: string) {
     this.text = text.trim();
+  }
+  async translate(): Promise<string> {
     if (!this.text) return '';
-
     const cacheKey = `${this.engine}_${this.cacheKey}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
@@ -59,18 +61,19 @@ class VarTranslator {
     try {
       const engine = translatePlatforms[this.engine] || translatePlatforms.google;
       const processedText = this.targetLang === LANGUAGE.ZH
-        ? noCase(this.text)
+        ? capitalCase(this.text)
         : this.text;
 
-      this.showStatus(`${this.engine} 翻译中: ${this.text} → ${this.targetLang}`);
+      this.showStatus(`翻译: ${processedText} 到 ${this.targetLang}`);
       const { text: result } = await engine(processedText, this.targetLang);
 
-      this.cache.set(cacheKey, {
-        engine: this.engine,
-        key: this.cacheKey,
-        result
-      });
-
+      if (result) {
+        this.cache.set(cacheKey, {
+          engine: this.engine,
+          key: this.cacheKey,
+          result
+        });
+      }
       return result;
     } catch (error: any) {
       this.showStatus(`翻译失败: ${error.message}`);

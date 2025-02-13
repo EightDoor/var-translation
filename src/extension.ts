@@ -1,5 +1,5 @@
 import { window, ExtensionContext, commands, QuickPickItem, Selection } from 'vscode';
-import { changeCaseMap, isChinese } from './utils';
+import { changeCaseMap } from './utils';
 import AsyncQuickPick from './utils/asyncPick';
 import VarTranslate from './translate';
 
@@ -59,21 +59,26 @@ const replaceTextInEditor = (editor: any, selection: any, newText: string) => {
 };
 
 /** 展示用户选择框 */
-/** 展示用户选择框 */
-const showSelectAndReplace = async (word: string, selection: Selection, translated: string | Promise<string>) => {
+const showSelectAndReplace = async (selection: Selection, selected: string) => {
   const editor = window.activeTextEditor;
   if (!editor) return;
-
   const handleReplace = async (userSelected: string | undefined) => {
-    if (userSelected) { replaceTextInEditor(editor, selection, userSelected); }
+    if (userSelected) {
+      replaceTextInEditor(editor, selection, userSelected);
+    }
   };
-  // 处理异步情况
-  if (translated instanceof Promise) {
-    /* 先快速输出转换 */
-    selectAndReplace(word, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
-    translated.then(asyncTranslated => selectAndReplace(word, [{ label: asyncTranslated, description: '翻译' }], true).then(handleReplace));
+  /* 更新需要翻译的词 */
+  varTranslate.setText(selected);
+  const isZh = varTranslate.isChinese;
+  /* 中文情况下 需要先翻译成英文 再转换 */
+  if (isZh) {
+    const translated = await varTranslate.translate();
+    selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
   } else {
-    selectAndReplace(word, [{ label: translated, description: '翻译' }]).then(handleReplace);
+    /* 英文先出格式转换 再异步等结果 */
+    selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
+    const translated = await varTranslate.translate();
+    selectAndReplace(selected, [{ label: translated, description: '翻译' }]).then(handleReplace);
   }
 };
 
@@ -85,16 +90,7 @@ const main = async () => {
   if (!editor) return;
   for (const selection of editor.selections) {
     const selected = editor.document.getText(selection);
-    const isZh = isChinese(selected);
-    const to = isZh ? 'en' : 'zh';
-    // 中文情况下 需要先翻译成英文 在转换
-    if (isZh) {
-      const translated: string = await varTranslate.translate(selected);
-      showSelectAndReplace(translated, selection, translated);
-    } else {
-      /*英文情况下 直接异步翻译*/
-      showSelectAndReplace(selected, selection, varTranslate.translate(selected));
-    }
+    showSelectAndReplace(selection, selected);
   }
 };
 
@@ -110,8 +106,9 @@ const typeTranslation = async (type: string) => {
 
   for (const selection of editor.selections) {
     const selected = editor.document.getText(selection);
-    const isZh = isChinese(selected);
-    const word = isZh ? await varTranslate.translate(selected) : selected;
+    varTranslate.setText(selected);
+    const isZh = varTranslate.isChinese;
+    const word = isZh ? await varTranslate.translate() : selected;
     if (word) {
       replaceTextInEditor(editor, selection, changeCase.handle(word));
     }
