@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.59](https://github.com/SvenZhao/var-translation/compare/v0.13.58...v0.13.59) (2025-06-24)
+
+
+### Features
+
+* 监听更新配置 ([c8079e7](https://github.com/SvenZhao/var-translation/commit/c8079e7ca71d8ef703c7f8b46e7bea4bf6a0e71d))
+* 优化代码结构 ([25ed582](https://github.com/SvenZhao/var-translation/commit/25ed582d79df38c6d7bdec89f0d7bde91b829577))
+* 优化逻辑 ([628b76b](https://github.com/SvenZhao/var-translation/commit/628b76b1dcab345fde1a001b42a83b6ca43a44e3))
+
+
+### Bug Fixes
+
+* ai翻译互译不标准 ([a48790c](https://github.com/SvenZhao/var-translation/commit/a48790c27a8f7c0c24ca89de302b06a356fa147c))
+
 ### [0.13.58](https://github.com/SvenZhao/var-translation/compare/v0.13.57...v0.13.58) (2025-02-12)
 
 
