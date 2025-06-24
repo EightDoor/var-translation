@@ -90,12 +90,12 @@ const engines = {
         messages: [
           {
             role: 'system',
-            content: '你是一名专业的翻译助手，专注于帮助程序员翻译变量名。请根据目标语言翻译输入的变量名，确保翻译后的内容准确反映其含义，无需考虑命名规范。'
+            content: `你是专业的变量名翻译助手。收到变量名后，只需返回对应目标语言的准确翻译词汇，不要做任何解释或多余内容。`
           },
           {
             role: 'user',
-            content: `请将以下变量名翻译为${to}：${src}`
-          },
+            content: `请将变量名 "${src}" 翻译成${to}，只返回翻译文本，不要加引号和额外符号。`
+          }
         ],
       });
       return { text: res.data.choices[0].message.content };

@@ -72,8 +72,8 @@ class VarTranslator {
         : this.text;
 
       this.showStatus(`${this.engine}翻译: ${processedText} 到 ${this.targetLang}`);
-      const { text: result } = await engine(processedText, this.targetLang);
-
+      let { text: result } = await engine(processedText, this.targetLang);
+      result=result.replace(/["\n\r]/g, '')
       if (result) {
         this.cache.set(cacheKey, {
           engine: this.engine,
