@@ -1,19 +1,11 @@
-import { window, ExtensionContext, commands, QuickPickItem, QuickPickOptions, workspace, Selection } from 'vscode';
-import translatePlatforms, { EengineType } from './inc/translate';
-import { changeCaseMap, isChinese } from './utils';
-import { noCase, snakeCase } from 'change-case';
+import { window, ExtensionContext, commands, QuickPickItem, Selection } from 'vscode';
+import { changeCaseMap } from './utils';
 import AsyncQuickPick from './utils/asyncPick';
+import VarTranslate from './translate';
 
-interface IWordResult {
-  engine: EengineType;
-  srcText: string;
-  result: string;
-}
 
-/** 翻译的内容缓存防止多次请求 */
-const translateCacheWords: IWordResult[] = [];
-
-let packageJSON: any;
+export let packageJSON: any;
+const varTranslate = new VarTranslate()
 
 const checkUpdate = async (context: ExtensionContext) => {
   const { globalState } = context;
@@ -44,37 +36,6 @@ export function activate(context: ExtensionContext) {
 export function deactivate() { }
 
 /**
- * 获取翻译结果或缓存翻译结果
- * @param srcText 原始文本
- * @param to 目标语言
- */
-const getTranslation = async (srcText: string, to: string) => {
-  const toZH = to === 'zh';
-  /* 缓存key */
-  const cacheKeyText = toZH ? snakeCase(srcText) : srcText;
-  /* 翻译用 */
-  const noCaseText = toZH ? noCase(srcText) : srcText;;
-  const engine: EengineType = workspace.getConfiguration('varTranslation').translationEngine;
-  console.log('translateCacheWords', translateCacheWords)
-  const cache = translateCacheWords.find((item) => item.engine === engine && item.srcText === cacheKeyText);
-  if (cache) {
-    window.setStatusBarMessage(`${packageJSON.displayName} 使用缓存: ${srcText}`, 2000);
-    return cache.result;
-  }
-  const translate = translatePlatforms[engine] || translatePlatforms.google;
-  window.setStatusBarMessage(`${engine} 正在翻译到${to}: ${srcText}`, 2000);
-  /* 翻译时 转换成分词的小写形式 */
-  const res = await translate(noCaseText, to);
-  const result = res.text;
-  if (result) {
-    console.log(`加入缓存: ${srcText},key:${cacheKeyText}`)
-    window.setStatusBarMessage(`加入缓存: ${srcText},key:${cacheKeyText}`, 2000);
-    translateCacheWords.push({ engine, srcText: cacheKeyText, result });
-  }
-  return result;
-};
-
-/**
  * 执行选择替换操作
  * @param word 需要处理的单词
  * @param quickPickItems 可选的快速选择项
@@ -98,25 +59,29 @@ const replaceTextInEditor = (editor: any, selection: any, newText: string) => {
 };
 
 /** 展示用户选择框 */
-const showSelectAndReplace = async (word: string, selection: Selection, translated: string | Promise<string>) => {
+const showSelectAndReplace = async (selection: Selection, selected: string) => {
   const editor = window.activeTextEditor;
-  /* 如果是异步情况 */
-  if (translated instanceof Promise) {
-    selectAndReplace(word, [{ label: '正在翻译中', description: '翻译' }])
-      .then((userSelected) => {
-        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
-      });
-    translated.then(asyncTranslated => selectAndReplace(word, [{ label: asyncTranslated, description: '翻译' }], true))
-      .then((userSelected) => {
-        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
-      });
+  if (!editor) return;
+  const handleReplace = async (userSelected: string | undefined) => {
+    if (userSelected) {
+      replaceTextInEditor(editor, selection, userSelected);
+    }
+  };
+  /* 更新需要翻译的词 */
+  varTranslate.setText(selected);
+  const isZh = varTranslate.isChinese;
+  /* 中文情况下 需要先翻译成英文 再转换 */
+  if (isZh) {
+    const translated = await varTranslate.translate();
+    selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
   } else {
-    selectAndReplace(word, [{ label: translated, description: '翻译' }])
-      .then((userSelected) => {
-        if (userSelected) replaceTextInEditor(editor, selection, userSelected);
-      });
+    /* 英文先出格式转换 再异步等结果 */
+    selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
+    const translated = await varTranslate.translate();
+    selectAndReplace(selected, [{ label: translated, description: '翻译' }]).then(handleReplace);
   }
-}
+};
+
 /**
  * 主翻译逻辑
  */
@@ -125,16 +90,7 @@ const main = async () => {
   if (!editor) return;
   for (const selection of editor.selections) {
     const selected = editor.document.getText(selection);
-    const isZh = isChinese(selected);
-    const to = isZh ? 'en' : 'zh';
-    // 中文情况下 需要先翻译成英文 在转换
-    if (isZh) {
-      const translated: string = await getTranslation(selected, to);
-      showSelectAndReplace(translated, selection, translated);
-    } else {
-      /*英文情况下 直接异步翻译*/
-      showSelectAndReplace(selected, selection, getTranslation(selected, to));
-    }
+    showSelectAndReplace(selection, selected);
   }
 };
 
@@ -150,8 +106,9 @@ const typeTranslation = async (type: string) => {
 
   for (const selection of editor.selections) {
     const selected = editor.document.getText(selection);
-    const isZh = isChinese(selected);
-    const word = isZh ? await getTranslation(selected, 'en') : selected;
+    varTranslate.setText(selected);
+    const isZh = varTranslate.isChinese;
+    const word = isZh ? await varTranslate.translate() : selected;
     if (word) {
       replaceTextInEditor(editor, selection, changeCase.handle(word));
     }
