@@ -72,13 +72,15 @@ const showSelectAndReplace = async (selection: Selection, selected: string) => {
   const isZh = varTranslate.isChinese;
   /* 中文情况下 需要先翻译成英文 再转换 */
   if (isZh) {
+    // 先立刻展示一个占位的 QuickPick，让用户看到界面响应
+    selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
     const translated = await varTranslate.translate();
     selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
   } else {
     /* 英文先出格式转换 再异步等结果 */
     selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
     const translated = await varTranslate.translate();
-    selectAndReplace(selected, [{ label: translated, description: '翻译' }]).then(handleReplace);
+    selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
   }
 };
 
