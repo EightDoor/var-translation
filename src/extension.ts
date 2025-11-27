@@ -72,15 +72,56 @@ const showSelectAndReplace = async (selection: Selection, selected: string) => {
   const isZh = varTranslate.isChinese;
   /* 中文情况下 需要先翻译成英文 再转换 */
   if (isZh) {
-    // 先立刻展示一个占位的 QuickPick，让用户看到界面响应
-    selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
-    const translated = await varTranslate.translate();
-    selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
+    // 先立刻展示一个占位的 QuickPick，让用户看到界面响应，并保持同一个 QuickPick 动态更新
+    const wordItems = changeCaseMap.map((item) => ({ label: item.handle(selected), description: item.description }));
+    const initialItems: QuickPickItem[] = [...wordItems, { label: '正在翻译中', description: '翻译' }];
+    quickPick.showQuickPick(initialItems, true).then(handleReplace);
+
+    // 带进度的翻译并支持重试
+    const doTranslateWithRetry = async (): Promise<string> => {
+      while (true) {
+        const translated = await window.withProgress({ location: window.ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
+          return await varTranslate.translate();
+        });
+        if (translated) return translated;
+        const pick = await window.showErrorMessage('翻译失败或超时', '重试', '取消');
+        if (pick === '重试') continue;
+        return '';
+      }
+    };
+
+    const translated = await doTranslateWithRetry();
+    if (translated) {
+      const newItems = changeCaseMap.map((item) => ({ label: item.handle(translated), description: item.description }));
+      quickPick.updateItems([...newItems, { label: translated, description: '翻译' }]);
+    } else {
+      quickPick.updateItems([...wordItems, { label: '翻译失败', description: '翻译' }]);
+    }
   } else {
     /* 英文先出格式转换 再异步等结果 */
-    selectAndReplace(selected, [{ label: '正在翻译中', description: '翻译' }]).then(handleReplace);
-    const translated = await varTranslate.translate();
-    selectAndReplace(translated, [{ label: translated, description: '翻译' }]).then(handleReplace);
+    const wordItems = changeCaseMap.map((item) => ({ label: item.handle(selected), description: item.description }));
+    const initialItems: QuickPickItem[] = [...wordItems, { label: '正在翻译中', description: '翻译' }];
+    quickPick.showQuickPick(initialItems, true).then(handleReplace);
+
+    const doTranslateWithRetry = async (): Promise<string> => {
+      while (true) {
+        const translated = await window.withProgress({ location: window.ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
+          return await varTranslate.translate();
+        });
+        if (translated) return translated;
+        const pick = await window.showErrorMessage('翻译失败或超时', '重试', '取消');
+        if (pick === '重试') continue;
+        return '';
+      }
+    };
+
+    const translated = await doTranslateWithRetry();
+    if (translated) {
+      const newItems = changeCaseMap.map((item) => ({ label: item.handle(translated), description: item.description }));
+      quickPick.updateItems([...newItems, { label: translated, description: '翻译' }]);
+    } else {
+      quickPick.updateItems([...wordItems, { label: '翻译失败', description: '翻译' }]);
+    }
   }
 };
 

@@ -221,6 +221,11 @@
           "default": "http://localhost:5000/translate",
           "description": "deeplx API"
         },
+        "varTranslation.requestTimeout": {
+          "type": "number",
+          "default": 5000,
+          "description": "网络请求超时时间（毫秒），用于自建翻译等接口请求，默认 5000ms"
+        },
         "varTranslation.translationEngine": {
           "type": "string",
           "enum": [

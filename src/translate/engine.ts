@@ -106,10 +106,11 @@ const engines = {
 
   async libretranslate(src: string, to: string) {
     const { apiBaseUrl, apiKey } = workspace.getConfiguration('varTranslation').libretranslate;
+    const timeout = workspace.getConfiguration('varTranslation').requestTimeout || 5000;
     const libretranslate = createEngineInstance('libretranslate', () => async (src: string, to: string) => {
       try {
-        // 添加超时，避免不可用的自建服务长时间阻塞
-        return await axios.post(apiBaseUrl, { q: src, source: 'auto', target: to, format: 'text', api_key: apiKey ?? '' }, { timeout: 5000 });
+        // 使用配置的超时，避免不可用的自建服务长时间阻塞
+        return await axios.post(apiBaseUrl, { q: src, source: 'auto', target: to, format: 'text', api_key: apiKey ?? '' }, { timeout });
       } catch (err) {
         return err;
       }
@@ -129,9 +130,10 @@ const engines = {
       return { text: '' };
     }
     try {
+      const timeout = workspace.getConfiguration('varTranslation').requestTimeout || 5000;
       const response = await axios.post(apiBaseUrl, JSON.stringify({ text: src, target_lang: to, source_lang: "auto" }), {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 5000,
+        timeout,
       });
       if (response.data.code !== 200) {
         window.showErrorMessage(`请求失败，错误码：${response.data.code}`);
