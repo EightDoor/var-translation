@@ -263,7 +263,8 @@
     "release": "standard-version",
     "publish": "npm run release && vsce publish",
     "f2elint-scan": "f2elint scan",
-    "f2elint-fix": "f2elint fix"
+    "f2elint-fix": "f2elint fix",
+    "local:build": "npx vsce package"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",

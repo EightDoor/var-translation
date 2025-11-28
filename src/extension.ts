@@ -1,4 +1,4 @@
-import { window, ExtensionContext, commands, QuickPickItem, Selection } from 'vscode';
+import { window, ExtensionContext, commands, QuickPickItem, Selection, ProgressLocation } from 'vscode';
 import { changeCaseMap } from './utils';
 import AsyncQuickPick from './utils/asyncPick';
 import VarTranslate from './translate';
@@ -80,7 +80,7 @@ const showSelectAndReplace = async (selection: Selection, selected: string) => {
     // 带进度的翻译并支持重试
     const doTranslateWithRetry = async (): Promise<string> => {
       while (true) {
-        const translated = await window.withProgress({ location: window.ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
+        const translated = await window.withProgress({ location: ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
           return await varTranslate.translate();
         });
         if (translated) return translated;
@@ -105,7 +105,7 @@ const showSelectAndReplace = async (selection: Selection, selected: string) => {
 
     const doTranslateWithRetry = async (): Promise<string> => {
       while (true) {
-        const translated = await window.withProgress({ location: window.ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
+        const translated = await window.withProgress({ location: ProgressLocation.Notification, title: '翻译中', cancellable: true }, async () => {
           return await varTranslate.translate();
         });
         if (translated) return translated;
