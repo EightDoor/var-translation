@@ -1,10 +1,10 @@
 {
-  "name": "var-translation",
+  "name": "var-translation1",
   "displayName": "驼峰翻译助手",
   "description": "快速将中文变量翻译名转换为多种常用驼峰命名格式（如 camelCase、PascalCase、snake_case 等）。同时，支持 腾讯 百度 OpenAI API 自定义翻译模型提升开发效率。",
-  "publisher": "svenzhao",
+  "publisher": "EightDoor",
   "icon": "images/logo.png",
-  "version": "0.13.60",
+  "version": "0.13.61",
   "engines": {
     "vscode": "^1.50.0"
   },
@@ -268,6 +268,7 @@
   "devDependencies": {
     "@types/glob": "^7.1.3",
     "@types/google-translate-api": "^2.3.1",
+    "@types/minimatch": "^3.0.4",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
     "@types/vscode": "^1.50.0",
@@ -299,5 +300,6 @@
       "pre-commit": "f2elint commit-file-scan",
       "commit-msg": "f2elint commit-msg-scan"
     }
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
